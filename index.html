@@ -1,185 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MathMasters</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: linear-gradient(135deg, #4e73df, #1cc88a);
-    color: #333;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathMasters - Strict Skills</title>
+    <style>
+        :root { 
+            --primary: #1a237e; --secondary: #303f9f; --bg: #f5f7f9; 
+            --text: #2c3e50; --guest: #43a047; --danger: #d32f2f;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        #topNav { width: 100%; max-width: 500px; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .nav-btn { background: #607d8b; color: white; border: none; border-radius: 6px; padding: 8px 15px; cursor: pointer; font-size: 14px; }
+        
+        .card { background: white; border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; margin-top: 20px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.container {
-    max-width: 800px;
-    margin: auto;
-    padding: 20px;
-    background: white;
-    margin-top: 40px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-}
+        .ui-feedback { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; display: none; }
+        .ui-error { background: #ffebee; color: #c62828; display: block; }
+        .ui-info { background: #e8f5e9; color: #2e7d32; display: block; }
 
-h1 {
-    text-align: center;
-    color: #4e73df;
-}
+        input { width: 85%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #dfe6e9; font-size: 24px; text-align: center; outline: none; }
+        
+        button { background: var(--primary); color: white; border: none; border-radius: 6px; padding: 12px 24px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 5px; }
+        button:hover:not(:disabled) { filter: brightness(1.1); }
+        button:disabled { background: #b2bec3; cursor: not-allowed; }
 
-button {
-    padding: 10px 20px;
-    background: #4e73df;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-button:hover {
-    background: #2e59d9;
-}
-
-input {
-    padding: 10px;
-    margin: 5px 0;
-    width: 100%;
-}
-
-.hidden {
-    display: none;
-}
-
-.quiz-question {
-    margin-bottom: 15px;
-}
-</style>
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin: 15px 0; overflow: hidden; }
+        .progress-bar { background: #00b894; height: 100%; width: 0%; transition: 0.4s; }
+        
+        .hidden { display: none !important; }
+        #explanation { background: #fff9db; padding: 15px; border-left: 4px solid #f1c40f; text-align: left; margin-top: 15px; font-size: 14px; }
+    </style>
 </head>
 <body>
 
-<div class="container" id="authSection">
-    <h1>📚 MathMasters</h1>
-    <h3>Create Your Free Account</h3>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="createAccount()">Create Account</button>
-    <button onclick="login()">Login</button>
-    <p id="authMessage"></p>
-</div>
+    <div id="topNav">
+        <button class="nav-btn" onclick="goHome()">🏠 Home</button>
+        <button id="logoutAction" class="nav-btn hidden" style="background:var(--danger)" onclick="logout()">Logout</button>
+    </div>
 
-<div class="container hidden" id="quizSection">
-    <h1>Placement Quiz</h1>
-    <div id="quiz"></div>
-    <button onclick="submitQuiz()">Submit Quiz</button>
-</div>
+    <div id="frontPage" class="card">
+        <h1>MathMasters</h1>
+        <p>No shortcuts. Master every skill.</p>
+        <button onclick="showScreen('authSection')">Student Login</button>
+        <button onclick="enterGuestMode()" style="background:var(--guest)">Guest Mode</button>
+    </div>
 
-<div class="container hidden" id="lessonSection">
-    <h1>Your Recommended Grade Level</h1>
-    <h2 id="gradeResult"></h2>
-    <div id="lessonContent"></div>
-</div>
+    <div id="authSection" class="card hidden">
+        <h2>Account</h2>
+        <div id="authStatus" class="ui-feedback"></div>
+        <input id="user" type="text" placeholder="Username">
+        <input id="pass" type="password" placeholder="Password">
+        <div class="btn-grid">
+            <button onclick="handleAuth('login')">Login</button>
+            <button onclick="handleAuth('reg')" style="background:var(--secondary)">Register</button>
+        </div>
+    </div>
 
-<script>
-let currentUser = null;
-let users = {};
+    <div id="dashboard" class="card hidden">
+        <h2 id="welcomeMsg"></h2>
+        <div id="dashStatus" class="ui-feedback"></div>
+        <div id="progArea">
+            <strong id="gradeLabel"></strong>
+            <div class="progress-container"><div id="pBar" class="progress-bar"></div></div>
+            <p id="pText" style="font-size:12px;"></p>
+        </div>
+        <div class="btn-grid">
+            <button id="quizBtn" onclick="startQuiz()" style="background:#e67e22">Placement Quiz</button>
+            <button id="pracBtn" onclick="showScreen('skillMenu')">Enter Classroom</button>
+            <button onclick="showScreen('gradeSelector')">Change Grade</button>
+        </div>
+    </div>
 
-function createAccount() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+    <div id="gradeSelector" class="card hidden">
+        <h2>Select Grade</h2>
+        <div id="gradeGrid" class="btn-grid"></div>
+        <button onclick="showScreen('dashboard')" style="background:#777; width:95%; margin-top:10px;">Back</button>
+    </div>
 
-    if (!username || !password) {
-        document.getElementById("authMessage").innerText = "Please fill in all fields.";
-        return;
-    }
+    <div id="skillMenu" class="card hidden">
+        <h2 id="skillGradeTitle">Select a Skill</h2>
+        <div id="skillGrid" class="btn-grid"></div>
+        <div class="btn-grid">
+            <button onclick="showScreen('gradeSelector')" style="background:#607d8b">Switch Grade</button>
+            <button onclick="showScreen('dashboard')" style="background:#777">Dashboard</button>
+        </div>
+    </div>
 
-    users[username] = { password: password };
-    document.getElementById("authMessage").innerText = "Account created! Please login.";
-}
+    <div id="classroom" class="card hidden">
+        <div id="quizHeader" class="hidden" style="color:#e67e22; font-weight:bold; margin-bottom:10px;">PLACEMENT: Q<span id="qIdx">1</span>/3</div>
+        <h3 id="curSkillName" style="margin:0; color:var(--secondary);"></h3>
+        <h1 id="problemDisp" style="font-size: 48px; margin: 20px 0;"></h1>
+        <input id="ansInput" type="number" placeholder="?">
+        <div id="actions">
+            <button id="subBtn" onclick="check()">Submit</button>
+            <button id="nextBtn" class="hidden" onclick="nextProblem()">Continue</button>
+        </div>
+        <p id="resultMsg" style="font-weight:bold; margin-top:15px;"></p>
+        <div id="explanation" class="hidden"></div>
+    </div>
 
-function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+    <script>
+        let state = { user: '', grade: 1, unlocked: 1, score: 0, isGuest: false, quizMode: false, qStep: 0, qCorrect: 0, currentAns: 0, currentSkill: '', explainText: '' };
 
-    if (users[username] && users[username].password === password) {
-        currentUser = username;
-        document.getElementById("authSection").classList.add("hidden");
-        document.getElementById("quizSection").classList.remove("hidden");
-        loadQuiz();
-    } else {
-        document.getElementById("authMessage").innerText = "Invalid login.";
-    }
-}
+        // DATA: ONLY SPECIFIC SKILLS
+        const curriculum = {
+            1: ["Addition", "Subtraction"],
+            2: ["Double Addition", "Place Value"],
+            3: ["Multiplication", "Division"],
+            4: ["Fractions", "Decimals"],
+            5: ["Mixed Numbers", "Long Division"],
+            6: ["Ratios", "Integers"],
+            7: ["Percents", "Pre-Algebra"],
+            8: ["Linear Equations", "Exponents"],
+            9: ["Polynomials", "Factoring"],
+            10: ["Geometry Proofs", "Circles"],
+            11: ["Square Roots", "Product Rule"],
+            12: ["Derivatives", "Limits"]
+        };
 
-const questions = [
-    { question: "5 + 3 =", answer: 8, level: 1 },
-    { question: "12 - 4 =", answer: 8, level: 2 },
-    { question: "6 × 7 =", answer: 42, level: 4 },
-    { question: "45 ÷ 5 =", answer: 9, level: 5 },
-    { question: "Solve: 3x = 12", answer: 4, level: 7 },
-    { question: "Solve: x² = 25", answer: 5, level: 9 },
-    { question: "Derivative of x²?", answer: "2x", level: 11 }
-];
-
-function loadQuiz() {
-    const quizDiv = document.getElementById("quiz");
-    quizDiv.innerHTML = "";
-
-    questions.forEach((q, index) => {
-        quizDiv.innerHTML += `
-            <div class="quiz-question">
-                <label>${q.question}</label>
-                <input type="text" id="q${index}">
-            </div>
-        `;
-    });
-}
-
-function submitQuiz() {
-    let totalLevel = 0;
-    let correctCount = 0;
-
-    questions.forEach((q, index) => {
-        const userAnswer = document.getElementById(`q${index}`).value;
-        if (userAnswer.toString().toLowerCase() === q.answer.toString().toLowerCase()) {
-            totalLevel += q.level;
-            correctCount++;
+        function showScreen(id) {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'gradeSelector') renderGrades();
+            if(id === 'skillMenu') renderSkills();
+            if(id === 'dashboard') updateDash();
+            document.getElementById('logoutAction').classList.toggle('hidden', !state.user);
         }
-    });
 
-    let avgLevel = Math.round(totalLevel / (correctCount || 1));
+        function goHome() { showScreen('frontPage'); }
 
-    showLessons(avgLevel);
-}
+        function logout() {
+            state = { user: '', grade: 1, unlocked: 1, score: 0, isGuest: false };
+            goHome();
+        }
 
-function showLessons(level) {
-    document.getElementById("quizSection").classList.add("hidden");
-    document.getElementById("lessonSection").classList.remove("hidden");
+        function handleAuth(type) {
+            const u = document.getElementById('user').value.trim();
+            const p = document.getElementById('pass').value.trim();
+            const status = document.getElementById('authStatus');
+            if(!u || !p) return;
+            let db = JSON.parse(localStorage.getItem('mm_db') || '{}');
+            if(type === 'reg') {
+                db[u] = { pass: p, grade: 1, unlocked: 1, score: 0 };
+                localStorage.setItem('mm_db', JSON.stringify(db));
+                status.innerText = "Registered! Please login."; status.className="ui-feedback ui-info";
+            } else {
+                if(db[u] && db[u].pass === p) {
+                    state = { ...state, ...db[u], user: u, isGuest: false };
+                    showScreen('dashboard');
+                } else { status.innerText = "Invalid Login."; status.className="ui-feedback ui-error"; }
+            }
+        }
 
-    let grade = Math.min(Math.max(level, 1), 12);
+        function enterGuestMode() {
+            state = { user: 'Guest', grade: 1, unlocked: 12, score: 0, isGuest: true };
+            document.getElementById('welcomeMsg').innerText = "Guest Mode";
+            document.getElementById('progArea').classList.add('hidden');
+            document.getElementById('quizBtn').classList.add('hidden');
+            showScreen('dashboard');
+        }
 
-    document.getElementById("gradeResult").innerText = "Grade " + grade;
+        function updateDash() {
+            if(state.isGuest) return;
+            document.getElementById('welcomeMsg').innerText = `Student: ${state.user}`;
+            document.getElementById('gradeLabel').innerText = `Grade ${state.grade}`;
+            let p = (state.score % 100);
+            document.getElementById('pBar').style.width = p + "%";
+            document.getElementById('pText').innerText = `${p}/100 mastery to next grade`;
+            document.getElementById('quizBtn').classList.toggle('hidden', state.unlocked > 1);
+        }
 
-    const lessons = {
-        1: "Basic Addition & Subtraction",
-        2: "Two-digit Arithmetic",
-        3: "Multiplication Basics",
-        4: "Division & Word Problems",
-        5: "Fractions & Decimals",
-        6: "Ratios & Percentages",
-        7: "Pre-Algebra",
-        8: "Linear Equations",
-        9: "Algebra I",
-        10: "Geometry",
-        11: "Algebra II",
-        12: "Calculus Basics"
-    };
+        function renderGrades() {
+            const grid = document.getElementById('gradeGrid');
+            grid.innerHTML = "";
+            for(let i=1; i<=12; i++) {
+                const btn = document.createElement('button');
+                const lock = !state.isGuest && i > state.unlocked;
+                btn.innerText = `Grade ${i} ${lock ? '🔒' : ''}`;
+                btn.disabled = lock;
+                btn.onclick = () => { state.grade = i; showScreen('skillMenu'); };
+                grid.appendChild(btn);
+            }
+        }
 
-    document.getElementById("lessonContent").innerHTML =
-        `<p>Welcome to ${lessons[grade]}.</p>
-         <p>More interactive lessons coming soon!</p>`;
-}
-</script>
+        function renderSkills() {
+            const grid = document.getElementById('skillGrid');
+            grid.innerHTML = "";
+            document.getElementById('skillGradeTitle').innerText = `Grade ${state.grade} Skills`;
+            const sList = curriculum[state.grade] || [];
+            
+            sList.forEach(s => {
+                const btn = document.createElement('button');
+                btn.innerText = s;
+                btn.onclick = () => { state.currentSkill = s; startPractice(); };
+                grid.appendChild(btn);
+            });
+        }
 
+        function startQuiz() {
+            state.quizMode = true; state.qStep = 0; state.qCorrect = 0;
+            state.currentSkill = "Placement Quiz";
+            document.getElementById('quizHeader').classList.remove('hidden');
+            showScreen('classroom');
+            nextProblem();
+        }
+
+        function startPractice() {
+            state.quizMode = false;
+            document.getElementById('quizHeader').classList.add('hidden');
+            showScreen('classroom');
+            nextProblem();
+        }
+
+        function nextProblem() {
+            document.getElementById('subBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('explanation').classList.add('hidden');
+            document.getElementById('resultMsg').innerText = "";
+            document.getElementById('ansInput').disabled = false;
+            document.getElementById('ansInput').value = "";
+            document.getElementById('qIdx').innerText = state.qStep + 1;
+            document.getElementById('curSkillName').innerText = state.currentSkill;
+
+            let a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1;
+            if(state.grade >= 11) {
+                let r = Math.floor(Math.random()*8)+2;
+                state.currentAns = r;
+                document.getElementById('problemDisp').innerText = `√${r*r}`;
+                state.explainText = `Because ${r} × ${r} = ${r*r}, the root is ${r}.`;
+            } else {
+                state.currentAns = a + b;
+                document.getElementById('problemDisp').innerText = `${a} + ${b}`;
+                state.explainText = `The sum of ${a} and ${b} is ${state.currentAns}.`;
+            }
+        }
+
+        function check() {
+            const val = parseInt(document.getElementById('ansInput').value);
+            const isCorrect = val === state.currentAns;
+            document.getElementById('ansInput').disabled = true;
+            document.getElementById('subBtn').classList.add('hidden');
+            
+            if(isCorrect) {
+                document.getElementById('resultMsg').innerText = "Correct!";
+                document.getElementById('resultMsg').style.color = "green";
+                if(state.quizMode) state.qCorrect++;
+                if(!state.isGuest) {
+                    state.score += 20;
+                    if(state.score >= (state.unlocked * 100)) state.unlocked++;
+                }
+            } else {
+                document.getElementById('resultMsg').innerText = "Incorrect.";
+                document.getElementById('resultMsg').style.color = "red";
+                document.getElementById('explanation').innerText = state.explainText;
+                document.getElementById('explanation').classList.remove('hidden');
+            }
+            document.getElementById('nextBtn').classList.remove('hidden');
+            if(!state.isGuest) saveDB();
+            
+            if(state.quizMode && state.qStep >= 2) document.getElementById('nextBtn').onclick = finalizeQuiz;
+            else document.getElementById('nextBtn').onclick = () => { if(state.quizMode) state.qStep++; nextProblem(); };
+        }
+
+        function finalizeQuiz() {
+            state.quizMode = false;
+            if(state.qCorrect >= 2) state.unlocked = Math.max(state.unlocked, 2);
+            saveDB();
+            showScreen('dashboard');
+        }
+
+        function saveDB() {
+            let db = JSON.parse(localStorage.getItem('mm_db') || '{}');
+            db[state.user] = { pass: db[state.user].pass, grade: state.grade, unlocked: state.unlocked, score: state.score };
+            localStorage.setItem('mm_db', JSON.stringify(db));
+        }
+
+        window.onload = goHome;
+    </script>
 </body>
 </html>
