@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathMasters</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #4e73df, #1cc88a);
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    background: white;
+    margin-top: 40px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+}
+
+h1 {
+    text-align: center;
+    color: #4e73df;
+}
+
+button {
+    padding: 10px 20px;
+    background: #4e73df;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #2e59d9;
+}
+
+input {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}
+
+.quiz-question {
+    margin-bottom: 15px;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="authSection">
+    <h1>📚 MathMasters</h1>
+    <h3>Create Your Free Account</h3>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="createAccount()">Create Account</button>
+    <button onclick="login()">Login</button>
+    <p id="authMessage"></p>
+</div>
+
+<div class="container hidden" id="quizSection">
+    <h1>Placement Quiz</h1>
+    <div id="quiz"></div>
+    <button onclick="submitQuiz()">Submit Quiz</button>
+</div>
+
+<div class="container hidden" id="lessonSection">
+    <h1>Your Recommended Grade Level</h1>
+    <h2 id="gradeResult"></h2>
+    <div id="lessonContent"></div>
+</div>
+
+<script>
+let currentUser = null;
+let users = {};
+
+function createAccount() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+        document.getElementById("authMessage").innerText = "Please fill in all fields.";
+        return;
+    }
+
+    users[username] = { password: password };
+    document.getElementById("authMessage").innerText = "Account created! Please login.";
+}
+
+function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if (users[username] && users[username].password === password) {
+        currentUser = username;
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("quizSection").classList.remove("hidden");
+        loadQuiz();
+    } else {
+        document.getElementById("authMessage").innerText = "Invalid login.";
+    }
+}
+
+const questions = [
+    { question: "5 + 3 =", answer: 8, level: 1 },
+    { question: "12 - 4 =", answer: 8, level: 2 },
+    { question: "6 × 7 =", answer: 42, level: 4 },
+    { question: "45 ÷ 5 =", answer: 9, level: 5 },
+    { question: "Solve: 3x = 12", answer: 4, level: 7 },
+    { question: "Solve: x² = 25", answer: 5, level: 9 },
+    { question: "Derivative of x²?", answer: "2x", level: 11 }
+];
+
+function loadQuiz() {
+    const quizDiv = document.getElementById("quiz");
+    quizDiv.innerHTML = "";
+
+    questions.forEach((q, index) => {
+        quizDiv.innerHTML += `
+            <div class="quiz-question">
+                <label>${q.question}</label>
+                <input type="text" id="q${index}">
+            </div>
+        `;
+    });
+}
+
+function submitQuiz() {
+    let totalLevel = 0;
+    let correctCount = 0;
+
+    questions.forEach((q, index) => {
+        const userAnswer = document.getElementById(`q${index}`).value;
+        if (userAnswer.toString().toLowerCase() === q.answer.toString().toLowerCase()) {
+            totalLevel += q.level;
+            correctCount++;
+        }
+    });
+
+    let avgLevel = Math.round(totalLevel / (correctCount || 1));
+
+    showLessons(avgLevel);
+}
+
+function showLessons(level) {
+    document.getElementById("quizSection").classList.add("hidden");
+    document.getElementById("lessonSection").classList.remove("hidden");
+
+    let grade = Math.min(Math.max(level, 1), 12);
+
+    document.getElementById("gradeResult").innerText = "Grade " + grade;
+
+    const lessons = {
+        1: "Basic Addition & Subtraction",
+        2: "Two-digit Arithmetic",
+        3: "Multiplication Basics",
+        4: "Division & Word Problems",
+        5: "Fractions & Decimals",
+        6: "Ratios & Percentages",
+        7: "Pre-Algebra",
+        8: "Linear Equations",
+        9: "Algebra I",
+        10: "Geometry",
+        11: "Algebra II",
+        12: "Calculus Basics"
+    };
+
+    document.getElementById("lessonContent").innerHTML =
+        `<p>Welcome to ${lessons[grade]}.</p>
+         <p>More interactive lessons coming soon!</p>`;
+}
+</script>
+
+</body>
+</html>
